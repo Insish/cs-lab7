@@ -1,1 +1,148 @@
+#include <iostream>
+#include <sstream> 
+#include <fstream>
+#include <vector>
+#include <map>
+#include <algorithm>
 
+using namespace std;
+
+class SubjectPointer {
+private:
+    struct PointerComponent {
+        string word;
+        vector<int> pageNumbers;
+    };
+
+    vector<PointerComponent> pointerComponents;
+
+public:
+    void addComponent(const string& word, const vector<int>& pageNumbers) {
+        PointerComponent newComponent;
+        newComponent.word = word;
+        newComponent.pageNumbers = pageNumbers;
+        pointerComponents.push_back(newComponent);
+    }
+
+    void removeComponent(const string& word) {
+        pointerComponents.erase(
+            remove_if(pointerComponents.begin(), pointerComponents.end(),
+                [&word](const PointerComponent& component) { return component.word == word; }),
+            pointerComponents.end());
+    }
+
+    void displayPointer() const {
+        for (const auto& component : pointerComponents) {
+            cout << component.word << ". Pages:";
+            for (int page : component.pageNumbers) {
+                cout << " " << page;
+            }
+            cout << endl;
+        }
+    }
+
+    vector<int> getPageNumbers(const string& word) const {
+        for (const auto& component : pointerComponents) {
+            if (component.word == word) {
+                return component.pageNumbers;
+            }
+        }
+        return {};
+    }
+};
+
+int main() {
+    SubjectPointer pointer;
+
+    ifstream file("items.txt");
+    if (file.is_open()) {
+        string line;
+        while (getline(file, line)) {
+            istringstream iss(line);
+            string word;
+            iss >> word;
+            int page;
+            vector<int> pages;
+            while (iss >> page) {
+                pages.push_back(page);
+            }
+            pointer.addComponent(word, pages);
+        }
+        file.close();
+    }
+    else {
+        cout << "Unable to open file." << endl;
+        return 1;
+    }
+
+    int choice;
+    string word;
+
+    do {
+        cout << endl;
+        cout << "Menu:\n";
+        cout << "1. Add a new pointer component\n";
+        cout << "2. Remove a pointer component\n";
+        cout << "3. Display pointer\n";
+        cout << "4. Get page numbers for a word\n";
+        cout << "5. Exit\n";
+        cout << "Enter your choice: ";
+        cin >> choice;
+        cin.ignore();
+
+        switch (choice) {
+        case 1: {
+            string newWord;
+            cout << "Enter word: ";
+            cin >> newWord;
+            cout << "Enter page numbers (separated by space, press Enter to finish): ";
+            cin.ignore();
+            string line;
+            getline(cin, line);
+            istringstream iss(line);
+            int page;
+            vector<int> pages;
+            while (iss >> page) {
+                pages.push_back(page);
+            }
+            pointer.addComponent(newWord, pages);
+            break;
+        }
+
+
+        case 2: {
+            cout << "Enter word to remove: ";
+            cin >> word;
+            pointer.removeComponent(word);
+            break;
+        }
+        case 3:
+            cout << "Pointer:\n";
+            pointer.displayPointer();
+            break;
+        case 4:
+            cout << "Enter word to get page numbers: ";
+            cin >> word;
+            {
+                vector<int> pages = pointer.getPageNumbers(word);
+                if (!pages.empty()) {
+                    cout << "Page numbers for " << word << ": ";
+                    for (int page : pages) {
+                        cout << page << " ";
+                    }
+                    cout << endl;
+                }
+                else {
+                    cout << "Word not found in the pointer.\n";
+                }
+            }
+            break;
+        case 5:
+            cout << "Exiting...\n";
+            break;
+        default:
+            cout << "Invalid choice. Please try again.\n";
+        }
+    } while (choice != 5);
+
+ }
